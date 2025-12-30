@@ -1,0 +1,29 @@
+package br.com.dio.reactiveflashcards.api.mapper;
+
+import br.com.dio.reactiveflashcards.api.controller.request.DeckRequest;
+import br.com.dio.reactiveflashcards.api.controller.request.StudyRequest;
+import br.com.dio.reactiveflashcards.api.controller.response.DeckResponse;
+import br.com.dio.reactiveflashcards.api.controller.response.QuestionResponse;
+import br.com.dio.reactiveflashcards.domain.document.DeckDocument;
+import br.com.dio.reactiveflashcards.domain.document.Question;
+import br.com.dio.reactiveflashcards.domain.document.StudyDocument;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+@Mapper(componentModel = "spring")
+public interface StudyMapper {
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "studyDeck.deckId", source = "deckId")
+    @Mapping(target = "studyDeck.cards", ignore = true)
+    @Mapping(target = "questions", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    StudyDocument toDocument(final StudyRequest request);
+
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    StudyDocument toDocument(final StudyRequest request, final String id);
+
+    QuestionResponse toResponse(final Question question);
+}
