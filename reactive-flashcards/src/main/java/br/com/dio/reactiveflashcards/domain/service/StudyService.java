@@ -8,6 +8,7 @@ import br.com.dio.reactiveflashcards.domain.exception.NotFoundException;
 import br.com.dio.reactiveflashcards.domain.mapper.StudyDomainMapper;
 import br.com.dio.reactiveflashcards.domain.repository.StudyRepository;
 import br.com.dio.reactiveflashcards.domain.service.query.DeckQueryService;
+import br.com.dio.reactiveflashcards.domain.service.query.StudyQueryService;
 import br.com.dio.reactiveflashcards.domain.service.query.UserQueryService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class StudyService {
 
     private final UserQueryService userQueryService;
     private final DeckQueryService deckQueryService;
+    private final StudyQueryService studyQueryService;
 
 
     private final StudyDomainMapper studyDomainMapper;
@@ -38,10 +40,10 @@ public class StudyService {
         return userQueryService.findById(document.userId())
                 .flatMap(user -> deckQueryService.findById(document.studyDeck().deckId()))
                 .flatMap(deck -> getCards(document, deck.cards()))
-                .map(study -> {
-                    study.addQuestion(studyDomainMapper.generateRandomQuestion(study.studyDeck().cards()));
-                    return study;
-                })
+                .map(study ->
+                    study.toBuilder()
+                            .question(studyDomainMapper.generateRandomQuestion(study.studyDeck().cards()))
+                            .build())
                 .doFirst(() -> log.info("=== generate a first random question"))
                 .flatMap(studyRepository::save)
                 .doOnSuccess(study -> log.info("a follow study was save {}", study));
@@ -56,5 +58,15 @@ public class StudyService {
                 .map(studyDeck -> document.toBuilder().studyDeck(studyDeck).build());
     }
 
+    public Mono<Void> delete(final String id) {
+        return studyQueryService.findById(id)
+                .flatMap(studyRepository::delete)
+                .doFirst(() -> log.info("=== Try to delete a study with follow id {}", id));
+    }
+
+    public Mono<Void> deleteAll() {
+        return studyRepository.deleteAll()
+                .doFirst(() -> log.info("=== Deleting all studies"));
+    }
 
 }

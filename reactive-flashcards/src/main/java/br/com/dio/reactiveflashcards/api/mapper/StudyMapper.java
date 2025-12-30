@@ -4,6 +4,7 @@ import br.com.dio.reactiveflashcards.api.controller.request.DeckRequest;
 import br.com.dio.reactiveflashcards.api.controller.request.StudyRequest;
 import br.com.dio.reactiveflashcards.api.controller.response.DeckResponse;
 import br.com.dio.reactiveflashcards.api.controller.response.QuestionResponse;
+import br.com.dio.reactiveflashcards.api.controller.response.StudyResponse;
 import br.com.dio.reactiveflashcards.domain.document.DeckDocument;
 import br.com.dio.reactiveflashcards.domain.document.Question;
 import br.com.dio.reactiveflashcards.domain.document.StudyDocument;
@@ -17,6 +18,7 @@ public interface StudyMapper {
     @Mapping(target = "studyDeck.deckId", source = "deckId")
     @Mapping(target = "studyDeck.cards", ignore = true)
     @Mapping(target = "questions", ignore = true)
+    @Mapping(target = "question", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     StudyDocument toDocument(final StudyRequest request);
@@ -26,4 +28,8 @@ public interface StudyMapper {
     StudyDocument toDocument(final StudyRequest request, final String id);
 
     QuestionResponse toResponse(final Question question);
+
+    @Mapping(target = "deckId", source = "studyDeck.deckId")
+    StudyResponse toResponse(final StudyDocument document);
+
 }
