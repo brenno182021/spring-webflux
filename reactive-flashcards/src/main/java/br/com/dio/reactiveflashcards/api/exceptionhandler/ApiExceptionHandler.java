@@ -1,5 +1,6 @@
 package br.com.dio.reactiveflashcards.api.exceptionhandler;
 
+import br.com.dio.reactiveflashcards.domain.exception.DeckInStudyException;
 import br.com.dio.reactiveflashcards.domain.exception.EmailAlreadyUsedException;
 import br.com.dio.reactiveflashcards.domain.exception.NotFoundException;
 import br.com.dio.reactiveflashcards.domain.exception.ReactiveFlashcardsException;
@@ -21,6 +22,8 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @AllArgsConstructor
 public class ApiExceptionHandler implements WebExceptionHandler {
+
+    private final DeckInStudyHandler deckInStudyHandler;
 
     private final EmailAlreadyUsedHandler emailAlreadyUsedHandler;
 
@@ -44,6 +47,7 @@ public class ApiExceptionHandler implements WebExceptionHandler {
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         return Mono.error(ex)
+                .onErrorResume(DeckInStudyException.class, e -> deckInStudyHandler.handlerException(exchange,e))
                 .onErrorResume(EmailAlreadyUsedException.class, e -> emailAlreadyUsedHandler.handlerException(exchange,e))
                 .onErrorResume(MethodNotAllowedException.class, e -> methodNotAllowedHandler.handlerException(exchange, e))
                 .onErrorResume(NotFoundException.class, e -> notFoundException.handlerException(exchange, e))

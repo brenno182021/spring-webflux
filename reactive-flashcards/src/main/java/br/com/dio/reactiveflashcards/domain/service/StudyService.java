@@ -2,8 +2,7 @@ package br.com.dio.reactiveflashcards.domain.service;
 
 import br.com.dio.reactiveflashcards.domain.document.Card;
 import br.com.dio.reactiveflashcards.domain.document.StudyDocument;
-import br.com.dio.reactiveflashcards.domain.document.UserDocument;
-import br.com.dio.reactiveflashcards.domain.exception.EmailAlreadyUsedException;
+import br.com.dio.reactiveflashcards.domain.exception.DeckInStudyException;
 import br.com.dio.reactiveflashcards.domain.exception.NotFoundException;
 import br.com.dio.reactiveflashcards.domain.mapper.StudyDomainMapper;
 import br.com.dio.reactiveflashcards.domain.repository.StudyRepository;
@@ -16,10 +15,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
 import java.util.Set;
 
-import static br.com.dio.reactiveflashcards.domain.exception.BaseErrorMessage.EMAIL_ALREADY_USED;
+import static br.com.dio.reactiveflashcards.domain.exception.BaseErrorMessage.*;
 
 @AllArgsConstructor
 @Slf4j
@@ -36,20 +34,31 @@ public class StudyService {
     private final StudyDomainMapper studyDomainMapper;
 
 
-    public Mono<StudyDocument> start(final StudyDocument document){
-        return userQueryService.findById(document.userId())
-                .flatMap(user -> deckQueryService.findById(document.studyDeck().deckId()))
-                .flatMap(deck -> getCards(document, deck.cards()))
-                .map(study ->
-                    study.toBuilder()
-                            .question(studyDomainMapper.generateRandomQuestion(study.studyDeck().cards()))
-                            .build())
-                .doFirst(() -> log.info("=== generate a first random question"))
-                .flatMap(studyRepository::save)
-                .doOnSuccess(study -> log.info("a follow study was save {}", study));
+    public Mono<StudyDocument> start(final StudyDocument document) {
+
+        return verifyStudy(document)
+                .then(userQueryService.findById(document.userId())
+                        .flatMap(user -> deckQueryService.findById(document.studyDeck().deckId()))
+                        .flatMap(deck -> fillDeckStudyCards(document, deck.cards()))
+                        .map(study ->
+                                study.toBuilder()
+                                        .question(studyDomainMapper.generateRandomQuestion(study.studyDeck().cards()))
+                                        .build())
+                        .doFirst(() -> log.info("=== generate a first random question"))
+                        .flatMap(studyRepository::save)
+                        .doOnSuccess(study -> log.info("a follow study was save {}", study)));
     }
 
-    public Mono<StudyDocument> getCards(final StudyDocument document, final Set<Card> cards) {
+    private Mono<Void> verifyStudy(final StudyDocument document) {
+
+        return studyQueryService.findPendingStudyByUserIdAndDeckId(document.userId(), document.studyDeck().deckId())
+                .flatMap(study -> Mono.defer(() -> Mono.error(new DeckInStudyException(DECK_IN_STUDY
+                        .params(document.userId(), document.studyDeck().deckId()).getMessage()))))
+                .onErrorResume(NotFoundException.class, e -> Mono.empty())
+                .then();
+    }
+
+    private Mono<StudyDocument> fillDeckStudyCards(final StudyDocument document, final Set<Card> cards) {
         return Flux.fromIterable(cards)
                 .doFirst(() -> log.info("=== copy cards to new study"))
                 .map(studyDomainMapper::toStudyCard)
