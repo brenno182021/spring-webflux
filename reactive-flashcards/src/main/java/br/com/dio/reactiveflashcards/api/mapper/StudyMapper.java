@@ -29,6 +29,8 @@ public interface StudyMapper {
 
     QuestionResponse toResponse(final Question question);
 
+    QuestionResponse toResponse(final Question question, final String id);
+
     @Mapping(target = "deckId", source = "studyDeck.deckId")
     StudyResponse toResponse(final StudyDocument document);
 

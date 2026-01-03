@@ -25,7 +25,11 @@ public class BaseErrorMessage {
 
     public static final BaseErrorMessage DECK_NOT_FOUND = new BaseErrorMessage("deck.NotFound");
 
+    public static final BaseErrorMessage STUDY_DECK_NOT_FOUND = new BaseErrorMessage("studyDeck.NotFound");
+
     public static final BaseErrorMessage STUDY_NOT_FOUND = new BaseErrorMessage("study.NotFound");
+
+    public static final BaseErrorMessage STUDY_QUESTION_NOT_FOUND = new BaseErrorMessage("studyQuestion.NotFound");
 
     public static final BaseErrorMessage DECK_IN_STUDY = new BaseErrorMessage("study.DeckInStudy");
 

@@ -1,6 +1,7 @@
 package br.com.dio.reactiveflashcards.domain.service.query;
 
 import br.com.dio.reactiveflashcards.domain.document.UserDocument;
+import br.com.dio.reactiveflashcards.domain.exception.EmailAlreadyUsedException;
 import br.com.dio.reactiveflashcards.domain.exception.NotFoundException;
 import br.com.dio.reactiveflashcards.domain.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Objects;
 
+import static br.com.dio.reactiveflashcards.domain.exception.BaseErrorMessage.EMAIL_ALREADY_USED;
 import static br.com.dio.reactiveflashcards.domain.exception.BaseErrorMessage.USER_NOT_FOUND;
 
 @Service
@@ -37,6 +39,16 @@ public class UserQueryService {
 
     public Flux<UserDocument> findAll(){
         return userRepository.findAll();
+    }
+
+    public Mono<Void> verifyEmail(final UserDocument document){
+
+        return findByEmail(document.email())
+                .filter(stored -> stored.id().equals(document.id()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new EmailAlreadyUsedException(EMAIL_ALREADY_USED
+                        .params(document.email()).getMessage()))))
+                .onErrorResume(NotFoundException.class, e -> Mono.empty())
+                .then();
     }
 
 }

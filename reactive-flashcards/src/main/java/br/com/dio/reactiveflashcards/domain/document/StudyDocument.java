@@ -1,7 +1,7 @@
 package br.com.dio.reactiveflashcards.domain.document;
 
+import br.com.dio.reactiveflashcards.domain.exception.NotFoundException;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -11,8 +11,11 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+
+import static br.com.dio.reactiveflashcards.domain.exception.BaseErrorMessage.STUDY_QUESTION_NOT_FOUND;
 
 @Document(collection = "studies")
 public record StudyDocument(@Id
@@ -35,13 +38,20 @@ public record StudyDocument(@Id
     }
 
     public StudyDocumentBuilder toBuilder(){
-        return new StudyDocumentBuilder(id, userId, complete, studyDeck, questions, createdAt, updatedAt);
+        return new StudyDocumentBuilder(id, userId,  studyDeck, questions, createdAt, updatedAt);
     }
 
-    public Question getLastQuestionPending(){
+    public Question getLastPendingQuestion(){
         return questions.stream()
-                .filter(q -> Objects.isNull(q.answeredIn()))
-                .findFirst()
+                .filter(q -> !q.isAnswered())
+                .max(Comparator.comparing(Question::askedIn))
+                .orElseThrow(() -> new NotFoundException(STUDY_QUESTION_NOT_FOUND.params(id).getMessage()));
+    }
+
+    public Question getLastAnsweredQuestion(){
+        return questions.stream()
+                .filter(q -> Objects.nonNull(q.answeredIn()))
+                .max(Comparator.comparing(Question::answeredIn))
                 .orElseThrow();
     }
 
@@ -50,7 +60,6 @@ public record StudyDocument(@Id
     public static class StudyDocumentBuilder {
         private String id;
         private String userId;
-        private Boolean complete = false;
         private StudyDeck studyDeck;
         private List<Question> questions = new ArrayList<>();
         private OffsetDateTime createdAt;
@@ -66,10 +75,6 @@ public record StudyDocument(@Id
             return this;
         }
 
-        public StudyDocumentBuilder complete() {
-            this.complete = true;
-            return this;
-        }
 
         public StudyDocumentBuilder studyDeck(final StudyDeck studyDeck) {
             this.studyDeck = studyDeck;
@@ -97,6 +102,8 @@ public record StudyDocument(@Id
         }
 
         public StudyDocument build(){
+            var rightQuestions = questions.stream().filter(Question::isCorrect).toList();
+            var complete = rightQuestions.size() == studyDeck.cards().size();
             return new StudyDocument(id, userId, complete, studyDeck, questions, createdAt, updatedAt);
         }
     }
