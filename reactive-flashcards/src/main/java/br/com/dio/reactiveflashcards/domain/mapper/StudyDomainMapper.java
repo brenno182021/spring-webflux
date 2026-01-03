@@ -42,14 +42,16 @@ public interface StudyDomainMapper {
         var currentQuestion = document.getLastPendingQuestion();
         var questions = document.questions();
         var curIndexQuestion = questions.indexOf(currentQuestion);
-        currentQuestion.toBuilder().answered(answer).build();
+        currentQuestion = currentQuestion.toBuilder().answered(answer).build();
 
         questions.set(curIndexQuestion, currentQuestion);
         return document.toBuilder().questions(questions).build();
     }
 
+    @Mapping(target = "question", ignore = true)
     StudyDTO toDTO(final StudyDocument document, final List<String> remainAsks);
 
+    @Mapping(target = "question", ignore = true)
     StudyDocument toDocument(final StudyDTO dto);
 }
 

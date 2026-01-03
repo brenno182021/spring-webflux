@@ -43,14 +43,14 @@ public record StudyDocument(@Id
 
     public Question getLastPendingQuestion(){
         return questions.stream()
-                .filter(q -> !q.isAnswered())
+                .filter(Question::isNotAnswered)
                 .max(Comparator.comparing(Question::askedIn))
                 .orElseThrow(() -> new NotFoundException(STUDY_QUESTION_NOT_FOUND.params(id).getMessage()));
     }
 
     public Question getLastAnsweredQuestion(){
         return questions.stream()
-                .filter(q -> Objects.nonNull(q.answeredIn()))
+                .filter(Question::isAnswered)
                 .max(Comparator.comparing(Question::answeredIn))
                 .orElseThrow();
     }
