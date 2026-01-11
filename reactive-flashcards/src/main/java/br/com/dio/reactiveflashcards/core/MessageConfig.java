@@ -1,4 +1,4 @@
-package br.com.dio.reactiveflashcards.config;
+package br.com.dio.reactiveflashcards.core;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
