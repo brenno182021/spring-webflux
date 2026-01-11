@@ -8,6 +8,7 @@ import br.com.dio.reactiveflashcards.domain.dto.QuestionDTO;
 import br.com.dio.reactiveflashcards.domain.dto.StudyDTO;
 import br.com.dio.reactiveflashcards.domain.exception.DeckInStudyException;
 import br.com.dio.reactiveflashcards.domain.exception.NotFoundException;
+import br.com.dio.reactiveflashcards.domain.mapper.MailMapper;
 import br.com.dio.reactiveflashcards.domain.mapper.StudyDomainMapper;
 import br.com.dio.reactiveflashcards.domain.repository.StudyRepository;
 import br.com.dio.reactiveflashcards.domain.service.query.DeckQueryService;
@@ -35,12 +36,14 @@ public class StudyService {
 
     private final StudyRepository studyRepository;
 
+    private final MailService mailService;
     private final UserQueryService userQueryService;
     private final DeckQueryService deckQueryService;
     private final StudyQueryService studyQueryService;
 
 
     private final StudyDomainMapper studyDomainMapper;
+    private final MailMapper mailMapper;
 
 
     public Mono<StudyDocument> start(final StudyDocument document) {
@@ -112,7 +115,9 @@ public class StudyService {
                 )
                 .flatMap(hasAnyAnswer -> generateNextQuestion(dto))
                 .map(question -> dto.toBuilder().question(question).build())
-                .onErrorResume(NotFoundException.class, e -> Mono.just(dto));
+                .onErrorResume(NotFoundException.class, e -> Mono.just(dto)
+                        .onTerminateDetach()
+                        .doOnSuccess(this::notifyUser));
     }
 
 
@@ -149,4 +154,12 @@ public class StudyService {
                 .doFirst(() -> log.info("=== Deleting all studies"));
     }
 
+
+    private void notifyUser(final StudyDTO dto) {
+        userQueryService.findById(dto.userId())
+                .zipWhen(user -> deckQueryService.findById(dto.studyDeck().deckId()))
+                .map(tuple -> mailMapper.toDTO(dto, tuple.getT2(), tuple.getT1()))
+                .flatMap(mailService::send)
+                .subscribe();
+    }
 }

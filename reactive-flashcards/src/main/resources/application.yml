@@ -1,4 +1,6 @@
 spring:
+  messages:
+    encoding: UTF-8
   webflux:
     base-path: /reactive-flashcards
   data:
@@ -16,4 +18,8 @@ spring:
 reactive-flashcards:
   mail:
     sender: Reactive Flashcards <noreply@reactiveflascards.com.br>
+
+retry-config:
+  max-retries: 3
+  min-duration: 1
 

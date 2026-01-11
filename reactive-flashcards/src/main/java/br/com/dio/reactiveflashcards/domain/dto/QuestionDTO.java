@@ -1,5 +1,6 @@
 package br.com.dio.reactiveflashcards.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micrometer.common.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

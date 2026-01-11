@@ -2,16 +2,20 @@ package br.com.dio.reactiveflashcards.domain.exception;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.context.MessageSource;
 
 
 import java.text.MessageFormat;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
 public class BaseErrorMessage {
 
-    private final String DEFAULT_RESOURCE = "messages";
+    @Setter
+    private static MessageSource messageSource;
 
     public static final BaseErrorMessage GENERIC_EXCEPTION = new BaseErrorMessage("generic");
 
@@ -20,6 +24,8 @@ public class BaseErrorMessage {
     public static final BaseErrorMessage GENERIC_METHOD_NOT_ALLOW = new BaseErrorMessage("generic.methodNotAllow");
 
     public static final BaseErrorMessage GENERIC_BAD_REQUEST = new BaseErrorMessage("generic.badRequest");
+
+    public static final BaseErrorMessage GENERIC_MAX_RETRIES = new BaseErrorMessage("generic.maxRetries");
 
     public static final BaseErrorMessage USER_NOT_FOUND = new BaseErrorMessage("user.NotFound");
 
@@ -45,23 +51,9 @@ public class BaseErrorMessage {
         return this;
     }
 
-
     public String getMessage() {
-        var message = tryGetMessageFromBundle();
-        if (ArrayUtils.isNotEmpty(params)) {
-            final var fmt = new MessageFormat(message);
-            message = fmt.format(params);
-        }
-
-        return message;
+        return messageSource.getMessage(key, params, Locale.getDefault());
     }
 
-    private String tryGetMessageFromBundle() {
-        return getResource().getString(key);
-    }
-
-    public ResourceBundle getResource() {
-        return ResourceBundle.getBundle(DEFAULT_RESOURCE);
-    }
 
 }
