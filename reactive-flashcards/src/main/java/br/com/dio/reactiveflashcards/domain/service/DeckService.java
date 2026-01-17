@@ -1,11 +1,14 @@
 package br.com.dio.reactiveflashcards.domain.service;
 
 import br.com.dio.reactiveflashcards.domain.document.DeckDocument;
+import br.com.dio.reactiveflashcards.domain.mapper.DeckDomainMapper;
 import br.com.dio.reactiveflashcards.domain.repository.DeckRepository;
 import br.com.dio.reactiveflashcards.domain.service.query.DeckQueryService;
+import br.com.dio.reactiveflashcards.domain.service.query.DeckRestQueryService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @AllArgsConstructor
@@ -16,6 +19,10 @@ public class DeckService {
     private final DeckRepository deckRepository;
 
     private final DeckQueryService deckQueryService;
+
+    private final DeckRestQueryService deckRestQueryService;
+
+    private final DeckDomainMapper deckDomainMapper;
 
 
     public Mono<DeckDocument> save(final DeckDocument document){
@@ -39,5 +46,19 @@ public class DeckService {
                 .doFirst(() -> log.info("=== Try to delete a deck with follow id {}", id));
     }
 
+    public Mono<Void> sync(){
+        return Mono.empty()
+                .onTerminateDetach()
+                .doOnSuccess(o -> backgroundSync())
+                .then();
+    }
+
+    private void backgroundSync(){
+        deckRestQueryService.getDecks()
+                .map(deckDomainMapper::toDocument)
+                .flatMap(deckRepository::save)
+                .then()
+                .subscribe();
+    }
 
 }
