@@ -5,12 +5,10 @@ import br.com.dio.reactiveflashcards.api.controller.request.enums.UserSortDirect
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Sort;
-
-import java.util.Objects;
 
 import static br.com.dio.reactiveflashcards.api.controller.request.enums.UserSortBy.NAME;
 import static br.com.dio.reactiveflashcards.api.controller.request.enums.UserSortDirection.ASC;
@@ -32,17 +30,12 @@ public record UserPageRequest(@JsonProperty("sentence")
 
     @Builder(toBuilder = true)
     public UserPageRequest {
-        if (Objects.isNull(sortBy)){
-            sortBy = NAME;
-        }
-
-        if (Objects.isNull(sortDirection)){
-            sortDirection = ASC;
-        }
-
-        limit = 20;
-        page = 0L;
+        sortBy = ObjectUtils.defaultIfNull(sortBy, NAME);
+        sortDirection = ObjectUtils.defaultIfNull(sortDirection, ASC);
+        limit = ObjectUtils.defaultIfNull(limit, 20);
+        page = ObjectUtils.defaultIfNull(page, 0L);
     }
+
     public Sort getSort(){
         return sortDirection.equals(DESC) ? Sort.by(sortBy.getField()).descending() : Sort.by(sortBy.getField()).ascending();
     }
