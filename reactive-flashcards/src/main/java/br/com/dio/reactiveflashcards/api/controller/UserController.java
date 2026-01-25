@@ -44,7 +44,7 @@ public class UserController {
                 .map(userMapper::toResponse);
     }
 
-    @GetMapping(produces = APPLICATION_JSON_VALUE)
+    @GetMapping(produces = APPLICATION_JSON_VALUE, value = "/all")
     public Flux<UserResponse> findAll(){
         return userQueryService.findAll()
                 .doFirst(() -> log.info("=== finding a users"))
