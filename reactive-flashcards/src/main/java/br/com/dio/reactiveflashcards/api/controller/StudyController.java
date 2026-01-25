@@ -1,5 +1,6 @@
 package br.com.dio.reactiveflashcards.api.controller;
 
+import br.com.dio.reactiveflashcards.api.controller.documentation.StudyControllerDoc;
 import br.com.dio.reactiveflashcards.api.controller.request.AnswerQuestionRequest;
 import br.com.dio.reactiveflashcards.api.controller.request.StudyRequest;
 import br.com.dio.reactiveflashcards.api.controller.response.AnswerQuestionResponse;
@@ -26,7 +27,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping("studies")
 @Slf4j
 @AllArgsConstructor
-public class StudyController {
+public class StudyController implements StudyControllerDoc {
 
 
     private final StudyService studyService;
@@ -38,6 +39,7 @@ public class StudyController {
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
+    @Override
     public Mono<QuestionResponse> start(@Valid @RequestBody final StudyRequest request) {
         return studyService.start(studyMapper.toDocument(request))
                 .doFirst(() -> log.info("=== try to create a study with follow request {}", request))
@@ -45,6 +47,7 @@ public class StudyController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "{id}/current-question")
+    @Override
     public Mono<QuestionResponse> getCurrentQuestion(@Valid @PathVariable @MongoId(message = "{studyController.id}") final String id){
         return studyQueryService.getLastPendingQuestion(id)
                 .doFirst(() -> log.info("=== try to get a next question in study {}", id))
@@ -52,6 +55,7 @@ public class StudyController {
     }
 
     @PostMapping(produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE, value = "{id}/answer")
+    @Override
     public Mono<AnswerQuestionResponse> answer(@Valid @PathVariable @MongoId(message = "{studyController.id}") final String id,
                                                @Valid @RequestBody final AnswerQuestionRequest request) {
         return studyService.answer(id, request.answer())
@@ -60,6 +64,7 @@ public class StudyController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE)
+    @Override
     public Flux<StudyResponse> findAll(){
         return studyQueryService.findAll()
                 .doFirst(() -> log.info("=== finding a users"))
@@ -68,6 +73,7 @@ public class StudyController {
 
     @DeleteMapping(value = "{id}")
     @ResponseStatus(NO_CONTENT)
+    @Override
     public Mono<Void> delete(@PathVariable @Valid @MongoId(message = "{studyController.id}") final String id){
         return studyService.delete(id)
                 .doFirst(() -> log.info("=== Deleting a study with follow id {}", id));
@@ -75,6 +81,7 @@ public class StudyController {
 
     @DeleteMapping
     @ResponseStatus(NO_CONTENT)
+    @Override
     public Mono<Void> deleteAll(){
         return studyService.deleteAll()
                 .doFirst(() -> log.info("=== Deleting ALL studies"));

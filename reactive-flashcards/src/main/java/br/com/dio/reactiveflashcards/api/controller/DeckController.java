@@ -1,8 +1,8 @@
 package br.com.dio.reactiveflashcards.api.controller;
 
+import br.com.dio.reactiveflashcards.api.controller.documentation.DeckControllerDoc;
 import br.com.dio.reactiveflashcards.api.controller.request.DeckRequest;
 import br.com.dio.reactiveflashcards.api.controller.response.DeckResponse;
-import br.com.dio.reactiveflashcards.api.controller.response.UserResponse;
 import br.com.dio.reactiveflashcards.api.mapper.DeckerMapper;
 import br.com.dio.reactiveflashcards.core.validation.MongoId;
 import br.com.dio.reactiveflashcards.domain.service.DeckService;
@@ -24,7 +24,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping("decks")
 @Slf4j
 @AllArgsConstructor
-public class DeckController {
+public class DeckController implements DeckControllerDoc {
 
 
     private final DeckService deckService;
@@ -36,6 +36,7 @@ public class DeckController {
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
+    @Override
     public Mono<DeckResponse> save(@Valid @RequestBody final DeckRequest request) {
         return deckService.save(deckerMapper.toDocument(request))
                 .doFirst(() -> log.info("=== Saving a deck with follow data {}", request))
@@ -44,12 +45,14 @@ public class DeckController {
 
     @PostMapping(value = "sync")
     @ResponseStatus(NO_CONTENT)
+    @Override
     public Mono<Void> sync(){
         return deckService.sync();
     }
 
 
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "{id}")
+    @Override
     public Mono<DeckResponse> findById(@PathVariable @Valid @MongoId(message = "{deckController.id}") final String id){
         return deckQueryService.findById(id)
                 .doFirst(() -> log.info("=== finding a deck with follow id {}", id))
@@ -57,6 +60,7 @@ public class DeckController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE)
+    @Override
     public Flux<DeckResponse> findAll(){
         return deckQueryService.findAll()
                 .doFirst(() -> log.info("=== finding all decks"))
@@ -64,8 +68,9 @@ public class DeckController {
     }
 
     @PutMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE, value = "{id}")
+    @Override
     public Mono<DeckResponse> update(@PathVariable @Valid @MongoId(message = "{deckController.id}") final String id,
-                                    @Valid @RequestBody final DeckRequest request){
+                                     @Valid @RequestBody final DeckRequest request){
         return deckService.update(deckerMapper.toDocument(request, id))
                 .doFirst(() -> log.info("=== Updating a deck with follow info [body: {}, id: {}]",request, id ))
                 .map(deckerMapper::toResponse);
@@ -73,6 +78,7 @@ public class DeckController {
 
     @DeleteMapping(value = "{id}")
     @ResponseStatus(NO_CONTENT)
+    @Override
     public Mono<Void> delete(@PathVariable @Valid @MongoId(message = "{deckController.id}") final String id){
         return deckService.delete(id)
                 .doFirst(() -> log.info("=== Deleting a deck with follow id {}", id));

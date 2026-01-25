@@ -11,7 +11,6 @@ import br.com.dio.reactiveflashcards.domain.service.query.UserQueryService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -26,7 +25,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping("users")
 @Slf4j
 @AllArgsConstructor
-public class UserController {
+public class UserControllerDoc implements br.com.dio.reactiveflashcards.api.controller.documentation.UserControllerDoc {
 
 
     private final UserService userService;
@@ -38,6 +37,7 @@ public class UserController {
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
+    @Override
     public Mono<UserResponse> save(@Valid @RequestBody final UserRequest request) {
         return userService.save(userMapper.toDocument(request))
                 .doFirst(() -> log.info("=== Saving a user with follow data {}", request))
@@ -45,6 +45,7 @@ public class UserController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "/all")
+    @Override
     public Flux<UserResponse> findAll(){
         return userQueryService.findAll()
                 .doFirst(() -> log.info("=== finding a users"))
@@ -52,6 +53,7 @@ public class UserController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "{id}")
+    @Override
     public Mono<UserResponse> findById(@PathVariable @Valid @MongoId(message = "{userController.id}") final String id){
         return userQueryService.findById(id)
                 .doFirst(() -> log.info("=== finding a user with follow id {}", id))
@@ -59,6 +61,7 @@ public class UserController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE)
+    @Override
     public Mono<UserPageResponse> findOnDemand(@Valid final UserPageRequest request){
         return userQueryService.findOnDemand(request)
                 .doFirst(() -> log.info("=== Finding users on demand with follow request {}", request))
@@ -66,8 +69,9 @@ public class UserController {
     }
 
     @PutMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE, value = "{id}")
+    @Override
     public Mono<UserResponse> update(@PathVariable @Valid @MongoId(message = "{userController.id}") final String id,
-                                    @Valid @RequestBody final UserRequest request){
+                                     @Valid @RequestBody final UserRequest request){
         return userService.update(userMapper.toDocument(request, id))
                 .doFirst(() -> log.info("=== Updating a user with follow info [body: {}, id: {}]",request, id ))
                 .map(userMapper::toResponse);
@@ -75,6 +79,7 @@ public class UserController {
 
     @DeleteMapping(value = "{id}")
     @ResponseStatus(NO_CONTENT)
+    @Override
     public Mono<Void> delete(@PathVariable @Valid @MongoId(message = "{userController.id}") final String id){
         return userService.delete(id)
                 .doFirst(() -> log.info("=== Deleting a user with follow id {}", id));
